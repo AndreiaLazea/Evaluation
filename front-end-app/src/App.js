@@ -1,15 +1,13 @@
 import React from 'react';
-import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
-import DataList from './DataList'; 
+import DataList from './DataList';
+import './App.css';
 
-
-const App = () => {
+function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<DataList />} />
-      </Routes>
-    </Router>
+    <div className="App">
+      <DataList />
+    </div>
   );
-};
+}
+
 export default App;

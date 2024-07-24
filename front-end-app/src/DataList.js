@@ -10,7 +10,7 @@ const DataList = () => {
 
   const fetchData = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/data');
+      const response = await fetch('http://localhost:5000/api/data/display');
       const data = await response.json();
       setData(data);
     } catch (error) {
@@ -20,7 +20,7 @@ const DataList = () => {
 
   return (
     <div className="data-list">
-      <h1>Data Overview</h1>
+      <h1>Data </h1>
       {data.length > 0 ? (
         data.map(item => (
           <div key={item._id} className="data-item">

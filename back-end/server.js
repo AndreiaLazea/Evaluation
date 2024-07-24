@@ -15,16 +15,14 @@ mongoose.connect(mongoDB)
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.error('MongoDB connection error:', err));
 
-app.get('/api/data', async (req, res) => {
+  app.get('/api/data/display', async (req, res) => {
     try {
-        console.log('Fetching data from MongoDB...');
-        const data = await Data.find();
-        res.json(data);
+      const data = await Data.find();
+      res.json(data);
     } catch (err) {
-        console.error('Error fetching data:', err); 
-        res.status(500).send(err);
+      res.status(500).send(err);
     }
-});
+  });
 
 app.use((req, res, next) => {
     res.status(404).send('Sorry, that route does not exist.');

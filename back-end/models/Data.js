@@ -1,21 +1,23 @@
 const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
-const songSchema = new mongoose.Schema({
+const SongSchema = new Schema({
   title: { type: String, required: true },
   length: { type: String, required: true }
 });
 
-const albumSchema = new mongoose.Schema({
+const AlbumSchema = new Schema({
   title: { type: String, required: true },
-  songs: [songSchema],
-  description: { type: String }
+  description: { type: String, required: true },
+  songs: [SongSchema]
 });
 
-const artistSchema = new mongoose.Schema({
+const ArtistSchema = new Schema({
   name: { type: String, required: true },
-  albums: [albumSchema]
+  albums: [AlbumSchema]
 });
-
-const Artist = mongoose.model('Artist', artistSchema, 'Data');
+const Artist = mongoose.model('Artist', ArtistSchema, 'Data');
+const Song = mongoose.model('Song', SongSchema, 'Data');
+const Album = mongoose.model('Album', AlbumSchema, 'Data');
 
 module.exports = Artist;

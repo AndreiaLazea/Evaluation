@@ -12,6 +12,7 @@ function App() {
     <div className="App">
       <nav>
         <ul>
+        <li><a href="/data">Display Data</a></li>
           <li><a href="/create">Create</a></li>
           <li><a href="/data">Read</a></li>
           <li><a href="/update">Update</a></li> 

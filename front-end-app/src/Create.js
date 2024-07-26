@@ -1,149 +1,202 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import './DataList.css';
 
 const API_URL = 'http://localhost:5000';
 
-const CreateComponent = ({ fetchData }) => {
-  const [artistName, setArtistName] = useState('');
-  const [albumDetails, setAlbumDetails] = useState({ artistId: '', title: '', description: '' });
-  const [songDetails, setSongDetails] = useState({ artistId: '', albumId: '', title: '', length: '' });
+const DataList = () => {
+  const [data, setData] = useState([]);
+  const [newArtistName, setNewArtistName] = useState('');
+  const [newAlbumData, setNewAlbumData] = useState({ artistId: '', title: '', description: '' });
+  const [newSongData, setNewSongData] = useState({ artistId: '', albumId: '', title: '', length: '' });
 
-  const handleCreateArtist = async (e) => {
-    e.preventDefault();
+  const fetchData = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/data/display`);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText);
+      }
+      const data = await response.json();
+      console.log('Fetched data:', data);
+      setData(data);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const handleCreateArtist = async () => {
     try {
       const response = await fetch(`${API_URL}/create-artist`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name: artistName, albums: [] }),
+        body: JSON.stringify({ name: newArtistName }),
       });
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message);
+        const errorText = await response.text();
+        throw new Error(errorText);
       }
-      setArtistName('');
-      fetchData();
+      await fetchData();
+      setNewArtistName('');
     } catch (error) {
       console.error('Error creating artist:', error.message);
     }
   };
 
-  const handleCreateAlbum = async (e) => {
-    e.preventDefault();
+  const handleCreateAlbum = async () => {
     try {
-      const response = await fetch(`${API_URL}/create-album/${albumDetails.artistId}`, {
+      const response = await fetch(`${API_URL}/create-album/${newAlbumData.artistId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ title: albumDetails.title, description: albumDetails.description, songs: [] }),
+        body: JSON.stringify({ title: newAlbumData.title, description: newAlbumData.description }),
       });
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message);
+        const errorText = await response.text();
+        throw new Error(errorText);
       }
-      setAlbumDetails({ artistId: '', title: '', description: '' });
-      fetchData();
+      await fetchData();
+      setNewAlbumData({ artistId: '', title: '', description: '' });
     } catch (error) {
       console.error('Error creating album:', error.message);
     }
   };
 
-  const handleCreateSong = async (e) => {
-    e.preventDefault();
+  const handleCreateSong = async () => {
     try {
-      const response = await fetch(`${API_URL}/create-song/${songDetails.artistId}/${songDetails.albumId}`, {
+      const response = await fetch(`${API_URL}/create-song/${newSongData.artistId}/${newSongData.albumId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ title: songDetails.title, length: songDetails.length }),
+        body: JSON.stringify({ title: newSongData.title, length: newSongData.length }),
       });
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message);
+        const errorText = await response.text();
+        throw new Error(errorText);
       }
-      setSongDetails({ artistId: '', albumId: '', title: '', length: '' });
-      fetchData();
+      await fetchData();
+      setNewSongData({ artistId: '', albumId: '', title: '', length: '' });
     } catch (error) {
       console.error('Error creating song:', error.message);
     }
   };
 
   return (
-    <div className="create-component">
-      <h2>Create Artist</h2>
-      <form onSubmit={handleCreateArtist}>
+    <div className="data-list">
+      <h1>Data</h1>
+      <div>
+        <h2>Create Artist</h2>
         <input
           type="text"
-          value={artistName}
-          onChange={(e) => setArtistName(e.target.value)}
+          value={newArtistName}
+          onChange={(e) => setNewArtistName(e.target.value)}
           placeholder="Artist Name"
-          required
         />
-        <button type="submit">Create Artist</button>
-      </form>
-
-      <h2>Create Album</h2>
-      <form onSubmit={handleCreateAlbum}>
+        <button onClick={handleCreateArtist}>Create Artist</button>
+      </div>
+      <div>
+        <h2>Create Album</h2>
+        <select
+          value={newAlbumData.artistId}
+          onChange={(e) => setNewAlbumData({ ...newAlbumData, artistId: e.target.value })}
+        >
+          <option value="">Select Artist</option>
+          {data.map((artist) => (
+            <option key={artist._id} value={artist._id}>
+              {artist.name}
+            </option>
+          ))}
+        </select>
         <input
           type="text"
-          value={albumDetails.artistId}
-          onChange={(e) => setAlbumDetails({ ...albumDetails, artistId: e.target.value })}
-          placeholder="Artist ID"
-          required
-        />
-        <input
-          type="text"
-          value={albumDetails.title}
-          onChange={(e) => setAlbumDetails({ ...albumDetails, title: e.target.value })}
+          value={newAlbumData.title}
+          onChange={(e) => setNewAlbumData({ ...newAlbumData, title: e.target.value })}
           placeholder="Album Title"
-          required
         />
         <input
           type="text"
-          value={albumDetails.description}
-          onChange={(e) => setAlbumDetails({ ...albumDetails, description: e.target.value })}
+          value={newAlbumData.description}
+          onChange={(e) => setNewAlbumData({ ...newAlbumData, description: e.target.value })}
           placeholder="Album Description"
-          required
         />
-        <button type="submit">Create Album</button>
-      </form>
-
-      <h2>Create Song</h2>
-      <form onSubmit={handleCreateSong}>
+        <button onClick={handleCreateAlbum} disabled={!newAlbumData.artistId}>Create Album</button>
+      </div>
+      <div>
+        <h2>Create Song</h2>
+        <select
+          value={newSongData.artistId}
+          onChange={(e) => setNewSongData({ ...newSongData, artistId: e.target.value })}
+        >
+          <option value="">Select Artist</option>
+          {data.map((artist) => (
+            <option key={artist._id} value={artist._id}>
+              {artist.name}
+            </option>
+          ))}
+        </select>
+        <select
+          value={newSongData.albumId}
+          onChange={(e) => setNewSongData({ ...newSongData, albumId: e.target.value })}
+          disabled={!newSongData.artistId}
+        >
+          <option value="">Select Album</option>
+          {newSongData.artistId &&
+            data
+              .find((artist) => artist._id === newSongData.artistId)
+              ?.albums.map((album) => (
+                <option key={album._id} value={album._id}>
+                  {album.title}
+                </option>
+              ))}
+        </select>
         <input
           type="text"
-          value={songDetails.artistId}
-          onChange={(e) => setSongDetails({ ...songDetails, artistId: e.target.value })}
-          placeholder="Artist ID"
-          required
-        />
-        <input
-          type="text"
-          value={songDetails.albumId}
-          onChange={(e) => setSongDetails({ ...songDetails, albumId: e.target.value })}
-          placeholder="Album ID"
-          required
-        />
-        <input
-          type="text"
-          value={songDetails.title}
-          onChange={(e) => setSongDetails({ ...songDetails, title: e.target.value })}
+          value={newSongData.title}
+          onChange={(e) => setNewSongData({ ...newSongData, title: e.target.value })}
           placeholder="Song Title"
-          required
         />
         <input
           type="text"
-          value={songDetails.length}
-          onChange={(e) => setSongDetails({ ...songDetails, length: e.target.value })}
+          value={newSongData.length}
+          onChange={(e) => setNewSongData({ ...newSongData, length: e.target.value })}
           placeholder="Song Length"
-          required
         />
-        <button type="submit">Create Song</button>
-      </form>
+        <button onClick={handleCreateSong} disabled={!newSongData.artistId || !newSongData.albumId}>
+          Create Song
+        </button>
+      </div>
+
+      {data.length > 0 ? (
+        data.map((artist) => (
+          <div key={artist._id} className="data-item">
+            <h2>{artist.name}</h2>
+            {artist.albums.map((album) => (
+              <div key={album._id} className="album-item">
+                <h3>{album.title}</h3>
+                <p>{album.description}</p>
+                <ul>
+                  {album.songs.map((song) => (
+                    <li key={song._id}>
+                      <strong>{song.title}</strong> - {song.length}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        ))
+      ) : (
+        <p>No data available</p>
+      )}
     </div>
   );
 };
 
-export default CreateComponent;
+export default DataList;

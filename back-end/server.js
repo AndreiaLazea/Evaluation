@@ -168,36 +168,34 @@ mongoose.connect(mongoDB)
 
     app.post('/create-artist', async (req, res) => {
         try {
-            const { name, albums } = req.body;
-            const artist = new Artist({ name, albums });
-            await artist.save();
-            res.json(artist);
+            const { name } = req.body;
+            const newArtist = new Artist({ name, albums: [] });
+            await newArtist.save();
+            res.json(newArtist);
         } catch (error) {
             console.error('Error creating artist:', error);
             res.status(500).json({ message: error.message });
         }
     });
     
-    // Create album
     app.post('/create-album/:artistId', async (req, res) => {
         try {
             const { artistId } = req.params;
-            const { title, description, songs } = req.body;
+            const { title, description } = req.body;
             const artist = await Artist.findById(artistId);
             if (!artist) {
                 return res.status(404).json({ message: 'Artist not found' });
             }
-            const album = { title, description, songs };
-            artist.albums.push(album);
+            const newAlbum = { _id: new mongoose.Types.ObjectId(), title, description, songs: [] };
+            artist.albums.push(newAlbum);
             await artist.save();
-            res.json(artist);
+            res.json(newAlbum);
         } catch (error) {
             console.error('Error creating album:', error);
             res.status(500).json({ message: error.message });
         }
     });
     
-    // Create song
     app.post('/create-song/:artistId/:albumId', async (req, res) => {
         try {
             const { artistId, albumId } = req.params;
@@ -210,15 +208,16 @@ mongoose.connect(mongoDB)
             if (!album) {
                 return res.status(404).json({ message: 'Album not found' });
             }
-            const song = { title, length };
-            album.songs.push(song);
+            const newSong = { _id: new mongoose.Types.ObjectId(), title, length };
+            album.songs.push(newSong);
             await artist.save();
-            res.json(artist);
+            res.json(newSong);
         } catch (error) {
             console.error('Error creating song:', error);
             res.status(500).json({ message: error.message });
         }
     });
+    
     
 app.use((req, res, next) => {
     res.status(404).send('Sorry, that route does not exist.');

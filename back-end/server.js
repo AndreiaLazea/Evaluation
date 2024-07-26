@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const Data = require('./models/Data');
+const { Artist } = require('./models/Data');
 
 const app = express();
 const port = 5000;
@@ -17,107 +18,208 @@ mongoose.connect(mongoDB)
 
     app.get('/api/data/display', async (req, res) => {
         try {
-            const data = await Data.find();
-            res.json(data);
-        } catch (err) {
-            res.status(500).send(err);
-        }
-    });
-    
-    app.get('/api/data', async (req, res) => {
-        try {
-            const data = await Data.find();
-            res.json(data);
-        } catch (err) {
-            res.status(500).send(err);
-        }
-    });
-    
-    app.post('/api/data', async (req, res) => {
-        const newData = new Data(req.body);
-        try {
-            const savedData = await newData.save();
-            res.status(201).json(savedData);
-        } catch (err) {
-            res.status(400).send(err);
-        }
-    });
-    
-    app.post('/update-artist/:id', async (req, res) => {
-        const { id } = req.params;
-        const { name } = req.body;
-    
-        try {
-            const updatedArtist = await Artist.findByIdAndUpdate(id, { name }, { new: true, runValidators: true });
-            if (!updatedArtist) {
-                return res.status(404).send('Artist not found');
-            }
-            res.status(200).send(updatedArtist);
+            const artists = await Artist.find();
+            res.json(artists);
         } catch (error) {
-            console.error('Failed to update artist:', error);
-            res.status(500).send('Internal Server Error');
+            console.error('Error fetching artists:', error);
+            res.status(500).json({ message: error.message });
         }
     });
     
-    // Update Album
-    app.post('/update-album/:artistId/:albumId', async (req, res) => {
-        const { artistId, albumId } = req.params;
-        const { title, description } = req.body;
     
+    app.put('/update-artist/:artistId', async (req, res) => {
         try {
+            const { artistId } = req.params;
+            const updateData = req.body;
+    
+            const artist = await Artist.findByIdAndUpdate(artistId, updateData, { new: true });
+            if (!artist) {
+                return res.status(404).json({ message: 'Artist not found' });
+            }
+            res.json(artist);
+        } catch (error) {
+            console.error('Error updating artist:', error);
+            res.status(500).json({ message: error.message });
+        }
+    });
+    
+    app.put('/update-album/:artistId/:albumName', async (req, res) => {
+        try {
+            const { artistId, albumName } = req.params;
+            const updateData = req.body;
+    
             const artist = await Artist.findById(artistId);
             if (!artist) {
-                return res.status(404).send('Artist not found');
+                return res.status(404).json({ message: 'Artist not found' });
             }
     
-            const album = artist.albums.id(albumId);
+            const album = artist.albums.find(album => album.title === albumName);
             if (!album) {
-                return res.status(404).send('Album not found');
+                return res.status(404).json({ message: 'Album not found' });
             }
     
-            album.title = title;
-            album.description = description;
+            album.title = updateData.title || album.title;
+            album.description = updateData.description || album.description;
+    
             await artist.save();
-    
-            res.status(200).send(artist);
+            res.json(album);
         } catch (error) {
-            console.error('Failed to update album:', error);
-            res.status(500).send('Internal Server Error');
+            console.error('Error updating album:', error);
+            res.status(500).json({ message: error.message });
         }
     });
     
-    // Update Song
-    app.post('/update-song/:artistId/:albumId/:songId', async (req, res) => {
-        const { artistId, albumId, songId } = req.params;
-        const { title, length } = req.body;
-    
+    app.put('/update-song/:artistId/:albumName/:songName', async (req, res) => {
         try {
+            const { artistId, albumName, songName } = req.params;
+            const updateData = req.body;
+    
             const artist = await Artist.findById(artistId);
             if (!artist) {
-                return res.status(404).send('Artist not found');
+                return res.status(404).json({ message: 'Artist not found' });
             }
     
-            const album = artist.albums.id(albumId);
+            const album = artist.albums.find(album => album.title === albumName);
             if (!album) {
-                return res.status(404).send('Album not found');
+                return res.status(404).json({ message: 'Album not found' });
             }
     
-            const song = album.songs.id(songId);
+            const song = album.songs.find(song => song.title === songName);
             if (!song) {
-                return res.status(404).send('Song not found');
+                return res.status(404).json({ message: 'Song not found' });
             }
     
-            song.title = title;
-            song.length = length;
-            await artist.save();
+            song.title = updateData.title || song.title;
+            song.length = updateData.length || song.length;
     
-            res.status(200).send(artist);
+            await artist.save();
+            res.json(song);
         } catch (error) {
-            console.error('Failed to update song:', error);
-            res.status(500).send('Internal Server Error');
+            console.error('Error updating song:', error);
+            res.status(500).json({ message: error.message });
         }
     });
 
+    app.delete('/delete-artist/:artistId', async (req, res) => {
+        try {
+            const { artistId } = req.params;
+            const artist = await Artist.findByIdAndDelete(artistId);
+            if (!artist) {
+                return res.status(404).json({ message: 'Artist not found' });
+            }
+            res.json({ message: 'Artist deleted successfully' });
+        } catch (error) {
+            console.error('Error deleting artist:', error);
+            res.status(500).json({ message: error.message });
+        }
+    });
+    
+    app.delete('/delete-album/:artistId/:albumName', async (req, res) => {
+        try {
+            const { artistId, albumName } = req.params;
+            console.log(`Deleting album with artistId: ${artistId}, albumName: ${albumName}`);
+    
+            const artist = await Artist.findById(artistId);
+            if (!artist) {
+                console.log('Artist not found');
+                return res.status(404).json({ message: 'Artist not found' });
+            }
+    
+            const album = artist.albums.find(album => album.title === albumName);
+            if (!album) {
+                console.log('Album not found');
+                return res.status(404).json({ message: 'Album not found' });
+            }
+    
+            artist.albums = artist.albums.filter(album => album._id.toString() !== album._id.toString()); // Remove album by filtering
+            await artist.save();
+            res.json({ message: 'Album deleted successfully' });
+        } catch (error) {
+            console.error('Error deleting album:', error);
+            res.status(500).json({ message: error.message });
+        }
+    });
+    
+    app.delete('/delete-song/:artistId/:albumName/:songName', async (req, res) => {
+        try {
+            const { artistId, albumName, songName } = req.params;
+            console.log(`Deleting song with artistId: ${artistId}, albumName: ${albumName}, songName: ${songName}`);
+    
+            const artist = await Artist.findById(artistId);
+            if (!artist) {
+                console.log('Artist not found');
+                return res.status(404).json({ message: 'Artist not found' });
+            }
+    
+            const album = artist.albums.find(album => album.title === albumName);
+            if (!album) {
+                console.log('Album not found');
+                return res.status(404).json({ message: 'Album not found' });
+            }
+    
+            album.songs = album.songs.filter(song => song.title !== songName); // Remove song by filtering
+            await artist.save();
+            res.json({ message: 'Song deleted successfully' });
+        } catch (error) {
+            console.error('Error deleting song:', error);
+            res.status(500).json({ message: error.message });
+        }
+    });
+
+    app.post('/create-artist', async (req, res) => {
+        try {
+            const { name, albums } = req.body;
+            const artist = new Artist({ name, albums });
+            await artist.save();
+            res.json(artist);
+        } catch (error) {
+            console.error('Error creating artist:', error);
+            res.status(500).json({ message: error.message });
+        }
+    });
+    
+    // Create album
+    app.post('/create-album/:artistId', async (req, res) => {
+        try {
+            const { artistId } = req.params;
+            const { title, description, songs } = req.body;
+            const artist = await Artist.findById(artistId);
+            if (!artist) {
+                return res.status(404).json({ message: 'Artist not found' });
+            }
+            const album = { title, description, songs };
+            artist.albums.push(album);
+            await artist.save();
+            res.json(artist);
+        } catch (error) {
+            console.error('Error creating album:', error);
+            res.status(500).json({ message: error.message });
+        }
+    });
+    
+    // Create song
+    app.post('/create-song/:artistId/:albumId', async (req, res) => {
+        try {
+            const { artistId, albumId } = req.params;
+            const { title, length } = req.body;
+            const artist = await Artist.findById(artistId);
+            if (!artist) {
+                return res.status(404).json({ message: 'Artist not found' });
+            }
+            const album = artist.albums.id(albumId);
+            if (!album) {
+                return res.status(404).json({ message: 'Album not found' });
+            }
+            const song = { title, length };
+            album.songs.push(song);
+            await artist.save();
+            res.json(artist);
+        } catch (error) {
+            console.error('Error creating song:', error);
+            res.status(500).json({ message: error.message });
+        }
+    });
+    
 app.use((req, res, next) => {
     res.status(404).send('Sorry, that route does not exist.');
 });

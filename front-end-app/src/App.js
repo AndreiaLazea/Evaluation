@@ -12,11 +12,10 @@ function App() {
     <div className="App">
       <nav>
         <ul>
-          <li><a href="/">Home</a></li>
           <li><a href="/create">Create</a></li>
           <li><a href="/data">Read</a></li>
           <li><a href="/update">Update</a></li> 
-          <li><a href="/delete">Update</a></li> 
+          <li><a href="/delete">Delete</a></li> 
           <li><a href="/search">Search</a></li> 
 
         </ul>
@@ -26,7 +25,6 @@ function App() {
       {path === '/update' && <Update />} 
       {path === '/delete' && <Delete />} 
       {path === '/search' && <Search />} 
-      {path === '/' && <h1>Welcome to the App</h1>}
     </div>
   );
 }
